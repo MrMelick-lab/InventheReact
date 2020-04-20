@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import authService from "./api-authorization/AuthorizeService";
 import {
   Alert,
   Table,
@@ -13,6 +12,7 @@ import {
   Col,
   Collapse,
 } from "reactstrap";
+import authService from "./api-authorization/AuthorizeService";
 import DeleteButton from "./DeleteButton";
 import update from "immutability-helper";
 
@@ -50,15 +50,23 @@ export class FetchData extends Component {
     this.dismissDeletedFailAlert = this.dismissDeletedFailAlert.bind(this);
   }
 
-  componentDidMount() {
-    const existingProducts = JSON.parse(
-      window.localStorage.getItem("products")
-    );
-    if (existingProducts === null) {
-      this.setState({ products: [] });
-      return;
-    }
-    this.setState({ products: existingProducts });
+  async componentDidMount() {
+    // const existingProducts = JSON.parse(
+    //   window.localStorage.getItem("products")
+    // );
+    // if (existingProducts === null) {
+    //   this.setState({ products: [] });
+    //   return;
+    // }
+    const token = await authService.getAccessToken();
+    const response = await fetch("products", {
+      headers: !token ? {} : { Authorization: `Bearer ${token}` },
+    });
+    const existingProducts = await response.json();
+    this.setState({
+      products: existingProducts,
+      loading: false,
+    });
   }
 
   handleChangeToQuantity(event) {
@@ -321,14 +329,5 @@ export class FetchData extends Component {
         </Container>
       </React.Fragment>
     );
-  }
-
-  async populateWeatherData() {
-    const token = await authService.getAccessToken();
-    const response = await fetch("weatherforecast", {
-      headers: !token ? {} : { Authorization: `Bearer ${token}` },
-    });
-    const data = await response.json();
-    this.setState({ forecasts: data, loading: false });
   }
 }
