@@ -36,12 +36,9 @@ export class FetchData extends Component {
       showDeletedFailAlert: false,
     };
     this.handleChangeToQuantity = this.handleChangeToQuantity.bind(this);
-    this.handleDelete = this.handleDelete.bind(this);
     this.handleIsAddingProduct = this.handleIsAddingProduct.bind(this);
-    this.handleCreateProduct = this.handleCreateProduct.bind(this);
     this.handleChangeToProductName = this.handleChangeToProductName.bind(this);
     this.handleChangeToNewQuantity = this.handleChangeToNewQuantity.bind(this);
-    this.handleSaveData = this.handleSaveData.bind(this);
     this.dismissSuccessSaveAlert = this.dismissSuccessSaveAlert.bind(this);
     this.dismissFailSaveAlert = this.dismissFailSaveAlert.bind(this);
     this.dismissAddedSucessAlert = this.dismissAddedSucessAlert.bind(this);
@@ -51,13 +48,6 @@ export class FetchData extends Component {
   }
 
   async componentDidMount() {
-    // const existingProducts = JSON.parse(
-    //   window.localStorage.getItem("products")
-    // );
-    // if (existingProducts === null) {
-    //   this.setState({ products: [] });
-    //   return;
-    // }
     const token = await authService.getAccessToken();
     const response = await fetch("products", {
       headers: !token ? {} : { Authorization: `Bearer ${token}` },
@@ -83,23 +73,47 @@ export class FetchData extends Component {
     this.setState(newState);
   }
 
-  handleDelete(event) {
+  handleSaveChangeToQuantity = async (event) => {
+    const id = event.currentTarget.id.toString().split(":")[1];
+    const newQuantity = this.state.products.find((p) => p.id === id).quantity;
+    const token = await authService.getAccessToken();
+    const response = await fetch(`products/${id}/?newQuantity=${newQuantity}`, {
+      headers: !token ? {} : { Authorization: `Bearer ${token}` },
+      method: "PUT",
+    });
+    if (response.status === 204) {
+      this.setState({ showSaveSuccesAlert: true });
+    } else {
+      this.setState({ showSaveFailAlert: true });
+    }
+  };
+
+  handleDelete = async (event) => {
     try {
       const id = event.target.name.toString().split(":")[1];
-      const deletedProductIndex = this.state.products.findIndex(
-        (product) => product.id.toString() === id
-      );
-      this.setState({
-        products: this.state.products.filter(
-          (_, i) => i !== deletedProductIndex
-        ),
+      const token = await authService.getAccessToken();
+      const response = await fetch(`products/${id}`, {
+        headers: !token ? {} : { Authorization: `Bearer ${token}` },
+        method: "DELETE",
       });
-      this.setState({ showDeletedSucessAlert: true });
+      if (response.status === 204) {
+        const deletedProductIndex = this.state.products.findIndex(
+          (product) => product.id.toString() === id
+        );
+        this.setState({
+          products: this.state.products.filter(
+            (_, i) => i !== deletedProductIndex
+          ),
+        });
+        this.setState({ showDeletedSucessAlert: true });
+      } else {
+        this.setState({ showDeletedFailAlert: true });
+      }
     } catch (error) {
       console.error(error);
       this.setState({ showDeletedFailAlert: true });
     }
-  }
+  };
 
   handleIsAddingProduct() {
     this.setState({ isAddingProduct: !this.state.isAddingProduct });
@@ -113,40 +127,35 @@ export class FetchData extends Component {
     this.setState({ newProductQuantity: event.target.value });
   }
 
-  handleCreateProduct() {
+  handleCreateProduct = async () => {
     try {
-      const newProduct = [
-        {
-          id: Math.floor(Math.random() * Math.floor(1000000)),
-          label: this.state.newProductName,
-          quantity: this.state.newProductQuantity,
+      const token = await authService.getAccessToken();
+      const response = await fetch(`products`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      ];
-      const newState = update(this.state, {
-        products: {
-          $push: newProduct,
-        },
+        body: `{"quantity": ${this.state.newProductQuantity}, "label": "${this.state.newProductName}"}`,
       });
-      this.setState(newState);
-      this.setState({ showAddedSucessAlert: true });
+      if (response.status === 201) {
+        const newProduct = [await response.json()];
+        const newState = update(this.state, {
+          products: {
+            $push: newProduct,
+          },
+        });
+        this.setState(newState);
+        this.setState({ showAddedSucessAlert: true });
+      } else {
+        this.setState({ showAddedFailAlert: true });
+      }
     } catch (error) {
       this.setState({ showAddedFailAlert: true });
       console.error(error);
     }
-  }
-
-  handleSaveData() {
-    try {
-      window.localStorage.setItem(
-        "products",
-        JSON.stringify(this.state.products)
-      );
-      this.setState({ showSaveSuccesAlert: true });
-    } catch (error) {
-      console.error(error);
-      this.setState({ showSaveFailAlert: true });
-    }
-  }
+  };
 
   dismissSuccessSaveAlert() {
     this.setState({ showSaveSuccesAlert: false });
@@ -173,14 +182,6 @@ export class FetchData extends Component {
   }
 
   render() {
-    // let contents = this.state.loading ? (
-    //   <p>
-    //     <em>Loading...</em>
-    //   </p>
-    // ) : (
-    //   FetchData.renderForecastsTable(this.state.products)
-    // );
-
     return (
       <React.Fragment>
         <Alert
@@ -188,7 +189,7 @@ export class FetchData extends Component {
           isOpen={this.state.showSaveSuccesAlert}
           toggle={this.dismissSuccessSaveAlert}
         >
-          Les données ont été enregistré avec succès.
+          La quantité du produit a été enregistrée avec succès
         </Alert>
         <Alert
           color="danger"
@@ -248,6 +249,16 @@ export class FetchData extends Component {
                         />
                       </th>
                       <th>
+                        <Button
+                          name={`changeQuantitybtn:${product.id}`}
+                          id={`changeQuantitybtn:${product.id}`}
+                          color={"success"}
+                          onClick={this.handleSaveChangeToQuantity}
+                        >
+                          Enregistrer
+                        </Button>
+                      </th>
+                      <th>
                         <DeleteButton
                           buttonLabel={"X"}
                           label={product.label}
@@ -271,18 +282,6 @@ export class FetchData extends Component {
                 onClick={this.handleIsAddingProduct}
               >
                 Ajouter un produit
-              </Button>
-            </Col>
-          </Row>
-          <Row>
-            <Col>
-              <Button
-                color="success"
-                size="lg"
-                block
-                onClick={this.handleSaveData}
-              >
-                Enregistrer
               </Button>
             </Col>
           </Row>

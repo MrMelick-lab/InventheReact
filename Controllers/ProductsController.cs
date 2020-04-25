@@ -12,7 +12,7 @@ using System;
 
 namespace InventheReact.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [ApiController]
     [Route("[controller]")]
     public class ProductsController : ControllerBase
@@ -51,9 +51,9 @@ namespace InventheReact.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateAsync(Guid id, ProductsDTO updatedProduct)
+        public async Task<IActionResult> UpdateQuantityAsync(Guid id, double newQuantity)
         {
-            if (updatedProduct is null || updatedProduct.Quantity < 0 || string.IsNullOrWhiteSpace(updatedProduct.Label))
+            if (newQuantity < 0)
             {
                 return BadRequest();
             }
@@ -65,8 +65,7 @@ namespace InventheReact.Controllers
                 return NotFound();
             }
 
-            product.Label = updatedProduct.Label;
-            product.Quantity = updatedProduct.Quantity;
+            product.Quantity = newQuantity;
             await _context.SaveChangesAsync();
 
             return NoContent();
