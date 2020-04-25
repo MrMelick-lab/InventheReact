@@ -9,10 +9,10 @@ InventheReact is a simple demo single page app used to manage products quantity.
 
 ## TODO
 
-```
-- [ ] Add unit test for the back-end
-- [ ] Add unit tests for the front-end
-- [ ] Add end-to-end automated test
-- [ ] Add input validation for the create product
-- [ ] Add spinner button or some sort of loading feedback while the user waits for the server response
-```
+| Name                     | Priority | Status | Release date |
+| ------------------------ | -------- | -------- | -------- |
+| Add input validation for the create product | High     |  | |
+| Add spinner to let the user know when the front end is waiting for a response from the server | High     |  | |
+| Add unit test for the back-end | Normal     |  | |
+| Add unit test for the back-end | Normal     |  | |
+| Add end-to-end automated test | Low     |  | |
