@@ -254,6 +254,8 @@ export class FetchData extends Component {
                           id={`changeQuantitybtn:${product.id}`}
                           color={"success"}
                           onClick={this.handleSaveChangeToQuantity}
+                          size="lg"
+                          block
                         >
                           Enregistrer
                         </Button>
