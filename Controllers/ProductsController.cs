@@ -12,7 +12,7 @@ using System;
 
 namespace InventheReact.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class ProductsController : ControllerBase
